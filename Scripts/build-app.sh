@@ -20,7 +20,10 @@ ARGS=(-project AIUsage.xcodeproj -scheme AIUsage -configuration "$CONFIG"
 # DEVELOPMENT_TEAM is what turns the entitlements from a build error into a
 # signed app. Without it, build unsigned so the code at least gets compiled.
 if [ -n "${DEVELOPMENT_TEAM:-}" ]; then
-  ARGS+=("DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM")
+  # -allowProvisioningUpdates lets Xcode register the bundle identifiers and the
+  # App Group with Apple and issue profiles. Without it, automatic signing can
+  # only use profiles that already exist locally, and there are none initially.
+  ARGS+=("DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM" -allowProvisioningUpdates)
 else
   echo "note: no DEVELOPMENT_TEAM set — building unsigned."
   echo "      The widget will NOT load; the sandbox denies the App Group without"

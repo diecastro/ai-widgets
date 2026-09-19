@@ -8,7 +8,7 @@ import os
 /// widget only reads. Writes go to a temp file and are renamed into place, so a
 /// reader never observes a half-written snapshot.
 public struct SnapshotStore: Sendable {
-    public static let appGroupID = "group.com.aiusage.widget"
+    public static let appGroupID = "group.com.diecastro.aiusage"
 
     private let fileURL: URL
     private static let log = Logger(subsystem: "com.aiusage", category: "store")

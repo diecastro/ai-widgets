@@ -5,7 +5,7 @@
 name: AIUsage
 
 options:
-  bundleIdPrefix: com.aiusage
+  bundleIdPrefix: com.diecastro
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -36,7 +36,7 @@ targets:
         CFBundleName: UsageCore
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.UsageCore
+        PRODUCT_BUNDLE_IDENTIFIER: com.diecastro.aiusage.UsageCore
         DEFINES_MODULE: YES
         SKIP_INSTALL: NO
         # UsageCore stays caller-isolated on purpose: it is a library, so the
@@ -68,10 +68,10 @@ targets:
       properties:
         com.apple.security.app-sandbox: false
         com.apple.security.application-groups:
-          - group.com.aiusage.widget
+          - group.com.diecastro.aiusage
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.menubar
+        PRODUCT_BUNDLE_IDENTIFIER: com.diecastro.aiusage
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
 
   # Renders only. Always sandboxed by the system, so it can read nothing but the
@@ -97,8 +97,8 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
-          - group.com.aiusage.widget
+          - group.com.diecastro.aiusage
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.menubar.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.diecastro.aiusage.widget
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor

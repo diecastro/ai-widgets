@@ -74,7 +74,7 @@ usage-probe      diagnostic CLI over UsageCore.
 
 WidgetKit extensions are **always sandboxed** and cannot read `~/.claude` or
 `~/.codex`. So collection lives entirely in the app, which writes one snapshot to
-the App Group container (`group.com.aiusage.widget`); the widget only ever reads
+the App Group container (`group.com.diecastro.aiusage`); the widget only ever reads
 that. `SnapshotStore` is the sole channel between the two, and falls back to
 `~/.ai-usage/snapshot.json` when the App Group is unavailable.
 
