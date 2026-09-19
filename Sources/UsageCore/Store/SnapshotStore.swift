@@ -45,9 +45,10 @@ public struct SnapshotStore: Sendable {
     public func write(_ snapshot: UsageSnapshot) throws {
         let directory = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let temp = directory.appendingPathComponent(".snapshot-\(UUID().uuidString).tmp")
-        try Self.encoder.encode(snapshot).write(to: temp)
-        _ = try FileManager.default.replaceItemAt(fileURL, withItemAt: temp)
+        // .atomic writes to a sibling temp file and renames it into place, which
+        // also works on the first write — replaceItemAt(_:withItemAt:) requires
+        // the destination to already exist and fails before any snapshot is saved.
+        try Self.encoder.encode(snapshot).write(to: fileURL, options: .atomic)
     }
 
     /// Returns ``UsageSnapshot/empty`` rather than throwing when nothing has been
