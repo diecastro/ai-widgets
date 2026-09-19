@@ -1,0 +1,104 @@
+# The Xcode project exists for one reason: WidgetKit extensions cannot be built
+# by SwiftPM. Package.swift remains the source of truth for UsageCore, the tests
+# and usage-probe; this spec wires the same sources into an app plus an
+# extension. Regenerate with `xcodegen generate` — never hand-edit the .pbxproj.
+name: AIUsage
+
+options:
+  bundleIdPrefix: com.aiusage
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    # Signing is resolved per-machine; see README. A widget extension is
+    # sandboxed, so its App Group entitlement must actually be honoured.
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+
+  # Shared model, providers and store. A framework rather than duplicated
+  # sources so the app and the extension cannot drift apart.
+  UsageCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/UsageCore
+    info:
+      path: Support/UsageCore-Info.plist
+      properties:
+        CFBundleName: UsageCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.UsageCore
+        DEFINES_MODULE: YES
+        SKIP_INSTALL: NO
+        # UsageCore stays caller-isolated on purpose: it is a library, so the
+        # caller decides where its work runs.
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+
+  # The menu bar agent. Does all collection; deliberately NOT sandboxed, because
+  # it has to read ~/.claude and ~/.codex.
+  AIUsage:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/AIUsageMenuBar
+    dependencies:
+      - target: UsageCore
+        embed: true
+      - target: AIUsageWidget
+        embed: true
+    info:
+      path: Support/AIUsage-Info.plist
+      properties:
+        CFBundleName: AIUsage
+        CFBundleDisplayName: AI Usage
+        LSMinimumSystemVersion: "14.0"
+        # Menu bar agent: no Dock icon, no app switcher entry.
+        LSUIElement: true
+    entitlements:
+      path: Support/AIUsage.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.application-groups:
+          - group.com.aiusage.widget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.menubar
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+
+  # Renders only. Always sandboxed by the system, so it can read nothing but the
+  # shared snapshot the app writes.
+  AIUsageWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/AIUsageWidget
+    dependencies:
+      - target: UsageCore
+        embed: false
+        link: true
+    info:
+      path: Support/AIUsageWidget-Info.plist
+      properties:
+        CFBundleName: AIUsageWidget
+        CFBundleDisplayName: AI Usage
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Support/AIUsageWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - group.com.aiusage.widget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aiusage.menubar.widget
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor

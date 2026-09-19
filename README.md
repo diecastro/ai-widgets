@@ -13,7 +13,7 @@ Quota percentages only — no token counts, no cost tracking.
 | M2 Codex provider | done |
 | M3 Snapshot store + refresher | done |
 | M4 Menu bar app | done |
-| M5 WidgetKit extension | needs Xcode |
+| M5 WidgetKit extension | built; needs a signing identity to run |
 | M6 Cursor provider | needs a credential |
 | M7 Preferences, launch at login | not started |
 
@@ -21,9 +21,35 @@ Quota percentages only — no token counts, no cost tracking.
 
 ```sh
 ./Scripts/install-claude-hook.sh   # once, so Claude Code caches its quota
-./Scripts/make-app.sh              # build build/AIUsage.app
-open build/AIUsage.app             # look in the menu bar
+./Scripts/build-app.sh             # app + widget extension (needs xcodegen)
+open .xcbuild/Build/Products/Debug/AIUsage.app
 ```
+
+`Scripts/make-app.sh` still builds a menu-bar-only app straight from SwiftPM,
+with no Xcode and no signing. Use it if you only want the menu bar.
+
+## Running the widget
+
+The menu bar app is not sandboxed, so it reads `~/.claude` and `~/.codex`
+directly. **A widget extension is always sandboxed**, and can reach the shared
+App Group container only if its entitlement is signed by a real development
+certificate. There is no way around this: App Groups are the only channel macOS
+offers between an app and its widget.
+
+A **free** Apple ID is sufficient — no paid developer account.
+
+1. Xcode → Settings → Accounts → **+** → Apple ID, and sign in.
+2. Find the resulting team id:
+   `security find-identity -v -p codesigning` (the parenthesised 10-character code).
+3. Build with it:
+   ```sh
+   DEVELOPMENT_TEAM=XXXXXXXXXX ./Scripts/build-app.sh
+   open .xcbuild/Build/Products/Debug/AIUsage.app
+   ```
+4. Right-click the desktop → Edit Widgets → **AI Usage**.
+
+Without `DEVELOPMENT_TEAM` the script still builds, but unsigned: the code
+compiles and the menu bar works, while the widget will not load.
 
 `./.build/debug/usage-probe` prints the same data as plain text, which is the
 fastest way to check ingest is working.

@@ -11,13 +11,14 @@ limits of Claude Code, Codex, and (not yet built) Cursor. Quota percentages only
 ## Commands
 
 ```sh
-swift build                              # build everything
+xcodegen generate                        # regenerate AIUsage.xcodeproj from project.yml
+./Scripts/build-app.sh                   # app + widget extension (see signing, below)
+swift build                              # UsageCore, usage-probe (no Xcode project needed)
 swift test                               # 27 tests, Swift Testing
 swift test --filter 'newest rollout'     # one test, by a fragment of its name
 
-./Scripts/make-app.sh                    # build build/AIUsage.app
-open build/AIUsage.app                   # run it (menu bar; no Dock icon)
-pkill -f AIUsage.app                     # stop it
+./Scripts/make-app.sh                    # menu-bar-only app, SwiftPM, no signing
+pkill -f AIUsage.app                     # stop a running app
 
 ./.build/debug/usage-probe               # print live quota as text
 ./.build/debug/usage-probe <fixture-dir> # same, against fixtures
@@ -38,6 +39,27 @@ compile against CLT alone. Everything else builds fine on CLT.
 `usage-probe` exists to verify ingest when tests cannot run. If Xcode's license
 has not been accepted, `export DEVELOPER_DIR=/Library/Developer/CommandLineTools`
 falls back to CLT for builds.
+
+## The Xcode project is generated
+
+`project.yml` is the source of truth; `AIUsage.xcodeproj`, `Support/` and
+`.xcbuild/` are all generated and git-ignored. **Never hand-edit the
+`.pbxproj`** — run `xcodegen generate`. `Package.swift` still owns UsageCore,
+the tests and `usage-probe`; the Xcode project exists only because SwiftPM
+cannot build a WidgetKit extension.
+
+## Signing
+
+The widget needs a real development certificate. Its App Group entitlement is
+the only channel macOS offers between an app and its widget, and a sandboxed
+extension only gets it when the entitlement is signed. A free Apple ID in
+Xcode → Settings → Accounts is enough; then build with
+`DEVELOPMENT_TEAM=XXXXXXXXXX ./Scripts/build-app.sh`.
+
+Without it `build-app.sh` falls back to an unsigned build, which compiles and
+runs the menu bar but will not load the widget. If the build fails with
+"has entitlements that require signing with a development certificate", that is
+this, not a project misconfiguration.
 
 ## Architecture
 
