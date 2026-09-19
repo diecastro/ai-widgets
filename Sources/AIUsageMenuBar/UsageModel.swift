@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import WidgetKit
 import UsageCore
 
 /// The seam between the async collection layer and the views.
@@ -14,6 +15,7 @@ final class UsageModel {
     private(set) var now: Date = .now
     private(set) var isRefreshing = false
 
+    private var hasReloadedWidget = false
     private let refresher: UsageRefresher
     private let store: SnapshotStore
 
@@ -26,8 +28,23 @@ final class UsageModel {
     func refresh() async {
         isRefreshing = true
         defer { isRefreshing = false }
-        snapshot = await refresher.refresh()
+
+        let updated = await refresher.refresh()
+        let changed = updated != snapshot
+        snapshot = updated
         now = .now
+
+        // The widget has no way to notice the shared snapshot changed — it only
+        // rebuilds its timeline when asked, or when its own reload policy fires.
+        // Reloading only on an actual change keeps this off WidgetKit's budget
+        // during the 60s poll, which usually finds nothing new.
+        // Forced once on launch too: the model starts from the same snapshot on
+        // disk, so nothing would look "changed" even though the widget may have
+        // been rendering stale data — or none — since before the app started.
+        if changed || !hasReloadedWidget {
+            hasReloadedWidget = true
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     /// Advances the clock so countdowns tick and a passed reset flips to 0%
