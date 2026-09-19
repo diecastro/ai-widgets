@@ -22,13 +22,17 @@ struct WidgetView: View {
         }
     }
 
-    /// Small: one line per provider, the most constrained window only. At this
-    /// size an extra row costs more legibility than the detail is worth.
+    /// Small: one line per provider, the session window only.
+    ///
+    /// Deliberately not the most-constrained window. At this size the question
+    /// is "can I keep working right now", which the session limit answers; the
+    /// weekly figure is usually higher and would otherwise win every time and
+    /// silently replace the number being looked for. The medium family shows both.
     private var smallBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
             ForEach(providers, id: \.provider) { provider in
-                if let window = provider.mostConstrained(asOf: now) {
+                if let window = provider.sessionWindow(asOf: now) {
                     compactRow(provider, window)
                 }
             }

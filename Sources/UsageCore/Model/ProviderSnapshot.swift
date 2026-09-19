@@ -31,7 +31,15 @@ public struct ProviderSnapshot: Hashable, Codable, Sendable {
         windows.first { $0.kind == kind }
     }
 
-    /// The window closest to its limit, which is what a compact surface shows.
+    /// The short rolling window — what "can I keep working right now" depends on.
+    ///
+    /// Falls back to the most constrained window for a provider that reports no
+    /// five-hour limit, so a compact surface still shows something meaningful.
+    public func sessionWindow(asOf now: Date) -> QuotaWindow? {
+        window(.fiveHour) ?? mostConstrained(asOf: now)
+    }
+
+    /// The window closest to its limit.
     public func mostConstrained(asOf now: Date) -> QuotaWindow? {
         windows.max { $0.effectiveUsedPercent(asOf: now) < $1.effectiveUsedPercent(asOf: now) }
     }

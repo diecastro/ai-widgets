@@ -40,3 +40,32 @@ struct QuotaWindowTests {
         #expect(WindowKind(windowMinutes: 45).shortLabel == "45m")
     }
 }
+
+@Suite("Session window selection")
+struct SessionWindowTests {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func snapshot(_ windows: [QuotaWindow]) -> ProviderSnapshot {
+        ProviderSnapshot(provider: .claudeCode, windows: windows, observedAt: now)
+    }
+
+    @Test func `prefers the five-hour window even when weekly is higher`() throws {
+        // The case that prompted this: a weekly window well above the session one
+        // would otherwise win, replacing the number the compact surface is for.
+        let snap = snapshot([
+            QuotaWindow(kind: .fiveHour, usedPercent: 62, resetsAt: now.addingTimeInterval(3600)),
+            QuotaWindow(kind: .weekly, usedPercent: 84, resetsAt: now.addingTimeInterval(90_000))
+        ])
+        #expect(try #require(snap.sessionWindow(asOf: now)).kind == .fiveHour)
+        #expect(try #require(snap.mostConstrained(asOf: now)).kind == .weekly)
+    }
+
+    @Test func `falls back when a provider reports no five-hour window`() throws {
+        let snap = snapshot([QuotaWindow(kind: .weekly, usedPercent: 12, resetsAt: nil)])
+        #expect(try #require(snap.sessionWindow(asOf: now)).kind == .weekly)
+    }
+
+    @Test func `is nil when a provider reports nothing`() {
+        #expect(snapshot([]).sessionWindow(asOf: now) == nil)
+    }
+}
