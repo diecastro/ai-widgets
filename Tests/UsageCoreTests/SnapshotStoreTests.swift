@@ -14,12 +14,14 @@ struct SnapshotStoreTests {
         let (store, dir) = tempStore()
         defer { try? FileManager.default.removeItem(at: dir) }
 
+        // Encoded as secondsSince1970, so only whole seconds survive a round trip.
+        let instant = Date(timeIntervalSince1970: 1_789_797_164)
         let original = UsageSnapshot(
             providers: [ProviderSnapshot(
                 provider: .claudeCode,
-                windows: [QuotaWindow(kind: .fiveHour, usedPercent: 39, resetsAt: Date())],
-                observedAt: Date())],
-            generatedAt: Date())
+                windows: [QuotaWindow(kind: .fiveHour, usedPercent: 39, resetsAt: instant)],
+                observedAt: instant)],
+            generatedAt: instant)
 
         try store.write(original)
         #expect(store.read() == original)

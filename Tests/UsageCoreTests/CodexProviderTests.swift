@@ -30,7 +30,16 @@ struct CodexProviderTests {
 
     @Test func `picks the most constrained window`() throws {
         let snap = try CodexProvider.parse(Fixture.data("codex-rollout.jsonl"))
-        #expect(try #require(snap.mostConstrained(asOf: Date())).kind == .fiveHour)
+        // Pinned before the 5h window's reset; at 10% vs the weekly 2% it leads.
+        let beforeReset = try #require(snap.window(.fiveHour)?.resetsAt).addingTimeInterval(-60)
+        #expect(try #require(snap.mostConstrained(asOf: beforeReset)).kind == .fiveHour)
+    }
+
+    @Test func `prefers a live window over one that has already reset`() throws {
+        let snap = try CodexProvider.parse(Fixture.data("codex-rollout.jsonl"))
+        // After the 5h reset it reads 0%, so the 2% weekly window is the binding one.
+        let afterReset = try #require(snap.window(.fiveHour)?.resetsAt).addingTimeInterval(60)
+        #expect(try #require(snap.mostConstrained(asOf: afterReset)).kind == .weekly)
     }
 
     @Test func `finds the newest rollout anywhere in the date tree`() throws {
@@ -49,7 +58,9 @@ struct CodexProviderTests {
         try FileManager.default.setAttributes(
             [.modificationDate: Date().addingTimeInterval(-3600)], ofItemAtPath: older.path)
 
-        #expect(CodexProvider.newestRollout(under: root) == newer)
+        // The enumerator canonicalises /var to /private/var, so compare resolved paths.
+        #expect(CodexProvider.newestRollout(under: root)?.resolvingSymlinksInPath()
+                == newer.resolvingSymlinksInPath())
     }
 
     @Test func `ignores files that are not rollouts`() throws {

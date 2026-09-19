@@ -8,16 +8,22 @@ import UsageCore
 /// click. Stale readings are dimmed rather than hidden — omitting them would
 /// imply a tool is fine when it is only unmeasured.
 enum MenuBarLabel {
+    private struct Entry {
+        let provider: ProviderID
+        let percent: Double
+        let isCurrent: Bool
+    }
+
     static func attributedTitle(for snapshot: UsageSnapshot, now: Date) -> NSAttributedString {
         let result = NSMutableAttributedString()
         let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
 
-        let entries = snapshot.providers.compactMap { provider -> (String, Double, Bool)? in
+        let entries = snapshot.providers.compactMap { provider -> Entry? in
             guard let window = provider.mostConstrained(asOf: now) else { return nil }
             let freshness = Freshness.of(provider, window: window, asOf: now)
-            return (String(provider.provider.displayName.prefix(1)),
-                    window.effectiveUsedPercent(asOf: now),
-                    freshness != .stale)
+            return Entry(provider: provider.provider,
+                         percent: window.effectiveUsedPercent(asOf: now),
+                         isCurrent: freshness != .stale)
         }
 
         guard !entries.isEmpty else {
@@ -30,10 +36,19 @@ enum MenuBarLabel {
             if index > 0 {
                 result.append(NSAttributedString(string: "  ", attributes: [.font: font]))
             }
-            let (initial, percent, isCurrent) = entry
-            let color = tint(for: percent, isCurrent: isCurrent)
+            let color = tint(for: entry.percent, isCurrent: entry.isCurrent)
+
+            // The mark is an attachment rather than a letter, so two providers
+            // whose names share an initial stay distinguishable.
+            let attachment = NSTextAttachment()
+            attachment.image = ProviderGlyph.image(for: entry.provider, tint: color)
+            // Nudged down so the glyph sits on the text's optical centre rather
+            // than its baseline, which would ride high against the digits.
+            attachment.bounds = CGRect(x: 0, y: -2.5, width: 13, height: 13)
+            result.append(NSAttributedString(attachment: attachment))
+
             result.append(NSAttributedString(
-                string: "\(initial) \(Int(percent.rounded()))",
+                string: " \(Int(entry.percent.rounded()))",
                 attributes: [.font: font, .foregroundColor: color]))
         }
         return result
