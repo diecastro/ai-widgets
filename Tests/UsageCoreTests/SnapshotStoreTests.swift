@@ -32,6 +32,15 @@ struct SnapshotStoreTests {
         #expect(store.read() == .empty)
     }
 
+    @Test func `the collector writes somewhere the reader can find it`() {
+        // Asserts the app/widget contract without touching the real sinks:
+        // collector() and reader() resolve production paths, so writing through
+        // them in a test would overwrite the running app's snapshot.
+        let shared = Set(SnapshotStore.collector().candidates.map(\.path))
+            .intersection(SnapshotStore.reader().candidates.map(\.path))
+        #expect(!shared.isEmpty, "no sink the app writes is one the widget reads")
+    }
+
     @Test func `keeps a provider's previous reading when it yields nothing`() async throws {
         let (store, dir) = tempStore()
         defer { try? FileManager.default.removeItem(at: dir) }

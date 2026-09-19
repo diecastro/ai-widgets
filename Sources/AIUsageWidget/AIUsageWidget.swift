@@ -13,7 +13,7 @@ struct UsageEntry: TimelineEntry {
 }
 
 struct UsageTimelineProvider: TimelineProvider {
-    private let store = SnapshotStore()
+    private let store = SnapshotStore.reader()
 
     func placeholder(in context: Context) -> UsageEntry {
         UsageEntry(date: .now, snapshot: .placeholder)

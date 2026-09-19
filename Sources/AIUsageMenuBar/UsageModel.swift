@@ -19,7 +19,7 @@ final class UsageModel {
     private let refresher: UsageRefresher
     private let store: SnapshotStore
 
-    init(store: SnapshotStore = SnapshotStore()) {
+    init(store: SnapshotStore = .collector()) {
         self.store = store
         self.refresher = .local(store: store)
         self.snapshot = store.read()

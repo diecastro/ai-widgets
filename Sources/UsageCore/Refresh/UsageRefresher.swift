@@ -17,7 +17,7 @@ public struct UsageRefresher: Sendable {
         self.store = store
     }
 
-    public static func local(store: SnapshotStore = SnapshotStore()) -> UsageRefresher {
+    public static func local(store: SnapshotStore = .collector()) -> UsageRefresher {
         UsageRefresher(providers: [ClaudeCodeProvider(), CodexProvider()], store: store)
     }
 

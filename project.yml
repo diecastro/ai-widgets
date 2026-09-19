@@ -67,8 +67,6 @@ targets:
       path: Support/AIUsage.entitlements
       properties:
         com.apple.security.app-sandbox: false
-        com.apple.security.application-groups:
-          - group.com.diecastro.aiusage
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.diecastro.aiusage
@@ -96,8 +94,6 @@ targets:
       path: Support/AIUsageWidget.entitlements
       properties:
         com.apple.security.app-sandbox: true
-        com.apple.security.application-groups:
-          - group.com.diecastro.aiusage
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.diecastro.aiusage.widget
